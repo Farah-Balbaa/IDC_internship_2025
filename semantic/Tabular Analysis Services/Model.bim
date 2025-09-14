@@ -1,0 +1,2031 @@
+{
+  "name": "SemanticModel",
+  "compatibilityLevel": 1200,
+  "model": {
+    "culture": "en-US",
+    "dataSources": [
+      {
+        "name": "SqlServer DESKTOP-H49D7J4 DWH",
+        "connectionString": "Provider=SQLOLEDB;Data Source=DESKTOP-H49D7J4;Initial Catalog=DWH;Integrated Security=SSPI;Persist Security Info=false",
+        "impersonationMode": "impersonateServiceAccount",
+        "annotations": [
+          {
+            "name": "ConnectionEditUISource",
+            "value": "SqlServer"
+          }
+        ]
+      }
+    ],
+    "tables": [
+      {
+        "name": "dim_campaign",
+        "columns": [
+          {
+            "name": "campaign_sk",
+            "dataType": "int64",
+            "sourceColumn": "campaign_sk",
+            "sourceProviderType": "Integer"
+          },
+          {
+            "name": "campaign_id",
+            "dataType": "string",
+            "sourceColumn": "campaign_id",
+            "sourceProviderType": "Char"
+          },
+          {
+            "name": "campaign_name",
+            "dataType": "string",
+            "sourceColumn": "campaign_name",
+            "sourceProviderType": "WChar"
+          },
+          {
+            "name": "campaign_type",
+            "dataType": "string",
+            "sourceColumn": "campaign_type",
+            "sourceProviderType": "WChar"
+          },
+          {
+            "name": "start_date",
+            "dataType": "string",
+            "sourceColumn": "start_date",
+            "sourceProviderType": "WChar"
+          },
+          {
+            "name": "end_date",
+            "dataType": "string",
+            "sourceColumn": "end_date",
+            "sourceProviderType": "WChar"
+          },
+          {
+            "name": "budget",
+            "dataType": "double",
+            "sourceColumn": "budget",
+            "sourceProviderType": "Numeric"
+          },
+          {
+            "name": "staging_date",
+            "dataType": "string",
+            "sourceColumn": "staging_date",
+            "sourceProviderType": "WChar"
+          },
+          {
+            "name": "s_end_date",
+            "dataType": "string",
+            "sourceColumn": "s_end_date",
+            "sourceProviderType": "WChar"
+          },
+          {
+            "name": "record_is_latest",
+            "dataType": "boolean",
+            "sourceColumn": "record_is_latest",
+            "formatString": "\"TRUE\";\"TRUE\";\"FALSE\"",
+            "sourceProviderType": "Boolean"
+          },
+          {
+            "type": "calculated",
+            "name": "Revenue Per Campaign",
+            "dataType": "double",
+            "isDataTypeInferred": true,
+            "expression": [
+              " COALESCE(",
+              "CALCULATE (",
+              "    SUM ( 'fact_transactions'[amount] ),",
+              "    FILTER (",
+              "        'fact_transactions',",
+              "        'fact_transactions'[campaign_sk] = dim_campaign[campaign_sk] &&",
+              "        NOT ISBLANK ( 'fact_transactions'[Revenue] ) &&",
+              "        'fact_transactions'[Revenue] > 0",
+              "    )",
+              "),",
+              "0",
+              ")"
+            ]
+          },
+          {
+            "type": "calculated",
+            "name": "Discount Usage Per Campaign",
+            "dataType": "int64",
+            "isDataTypeInferred": true,
+            "expression": [
+              " COALESCE (",
+              "CALCULATE (",
+              "    COUNTROWS ( 'fact_transactions' ),",
+              "    FILTER (",
+              "        'fact_transactions',",
+              "        'fact_transactions'[campaign_sk] = dim_campaign[campaign_sk] &&",
+              "        NOT ISBLANK ( 'fact_transactions'[discount percentage]) &&",
+              "        'fact_transactions'[discount percentage] > 0",
+              "    )",
+              " ) , ",
+              " 0",
+              ")"
+            ]
+          },
+          {
+            "type": "calculated",
+            "name": "Campaign Duration (Days)",
+            "dataType": "int64",
+            "isDataTypeInferred": true,
+            "expression": [
+              " ",
+              "DATEDIFF(dim_campaign[start_date], dim_campaign[end_date], DAY)"
+            ]
+          }
+        ],
+        "partitions": [
+          {
+            "name": "dim_campaign",
+            "dataView": "full",
+            "source": {
+              "type": "query",
+              "query": " \t\t\t\tSELECT [dbo].[dim_campaign].*   FROM [dbo].[dim_campaign] ",
+              "dataSource": "SqlServer DESKTOP-H49D7J4 DWH"
+            }
+          }
+        ],
+        "measures": [
+          {
+            "name": "Total Campaigns",
+            "expression": " DISTINCTCOUNT(dim_campaign[campaign_id])"
+          },
+          {
+            "name": "Average Revenue",
+            "expression": [
+              "",
+              "ROUND( AVERAGE(dim_campaign[Revenue Per campaign]), 2)"
+            ]
+          },
+          {
+            "name": "Average Campaign Duration",
+            "expression": [
+              "",
+              "AVERAGE(dim_campaign[Campaign Duration (Days)])"
+            ]
+          }
+        ],
+        "annotations": [
+          {
+            "name": "_TM_ExtProp_QueryDefinition",
+            "value": " \t\t\t\tSELECT [dbo].[dim_campaign].*   FROM [dbo].[dim_campaign] "
+          },
+          {
+            "name": "_TM_ExtProp_DbTableName",
+            "value": "dim_campaign"
+          },
+          {
+            "name": "_TM_ExtProp_DbSchemaName",
+            "value": "dbo"
+          }
+        ]
+      },
+      {
+        "name": "dim_channel",
+        "columns": [
+          {
+            "name": "channel_sk",
+            "dataType": "int64",
+            "sourceColumn": "channel_sk",
+            "sourceProviderType": "Integer"
+          },
+          {
+            "name": "channel_name",
+            "dataType": "string",
+            "sourceColumn": "channel_name",
+            "sourceProviderType": "WChar"
+          }
+        ],
+        "partitions": [
+          {
+            "name": "dim_channel",
+            "dataView": "full",
+            "source": {
+              "type": "query",
+              "query": " \t\t\t\tSELECT [dbo].[dim_channel].*   FROM [dbo].[dim_channel] ",
+              "dataSource": "SqlServer DESKTOP-H49D7J4 DWH"
+            }
+          }
+        ],
+        "measures": [
+          {
+            "name": "Top Interaction Channel",
+            "expression": [
+              "",
+              "MAXX (",
+              "    TOPN (",
+              "        1,",
+              "        SUMMARIZE (",
+              "            'dim_channel',",
+              "            'dim_channel'[channel_name],",
+              "            \"CountChannel\", COUNTROWS ( 'dim_channel' )",
+              "        ),",
+              "        [CountChannel], DESC",
+              "    ),",
+              "    'dim_channel'[channel_name]",
+              ")"
+            ]
+          }
+        ],
+        "annotations": [
+          {
+            "name": "_TM_ExtProp_QueryDefinition",
+            "value": " \t\t\t\tSELECT [dbo].[dim_channel].*   FROM [dbo].[dim_channel] "
+          },
+          {
+            "name": "_TM_ExtProp_DbTableName",
+            "value": "dim_channel"
+          },
+          {
+            "name": "_TM_ExtProp_DbSchemaName",
+            "value": "dbo"
+          }
+        ]
+      },
+      {
+        "name": "dim_customer",
+        "columns": [
+          {
+            "name": "customer_sk",
+            "dataType": "int64",
+            "sourceColumn": "customer_sk",
+            "sourceProviderType": "Integer"
+          },
+          {
+            "name": "customer_id",
+            "dataType": "string",
+            "sourceColumn": "customer_id",
+            "sourceProviderType": "WChar"
+          },
+          {
+            "name": "customer_name",
+            "dataType": "string",
+            "sourceColumn": "customer_name",
+            "sourceProviderType": "WChar"
+          },
+          {
+            "name": "age",
+            "dataType": "int64",
+            "sourceColumn": "age",
+            "sourceProviderType": "Integer"
+          },
+          {
+            "name": "gender",
+            "dataType": "string",
+            "sourceColumn": "gender",
+            "sourceProviderType": "Char"
+          },
+          {
+            "name": "email",
+            "dataType": "string",
+            "sourceColumn": "email",
+            "sourceProviderType": "WChar"
+          },
+          {
+            "name": "phone",
+            "dataType": "string",
+            "sourceColumn": "phone",
+            "sourceProviderType": "Char"
+          },
+          {
+            "name": "street_address",
+            "dataType": "string",
+            "sourceColumn": "street_address",
+            "sourceProviderType": "WChar"
+          },
+          {
+            "name": "city",
+            "dataType": "string",
+            "sourceColumn": "city",
+            "sourceProviderType": "WChar"
+          },
+          {
+            "name": "state",
+            "dataType": "string",
+            "sourceColumn": "state",
+            "sourceProviderType": "WChar"
+          },
+          {
+            "name": "zip_code",
+            "dataType": "int64",
+            "sourceColumn": "zip_code",
+            "sourceProviderType": "Integer"
+          },
+          {
+            "name": "registration_date",
+            "dataType": "string",
+            "sourceColumn": "registration_date",
+            "sourceProviderType": "WChar"
+          },
+          {
+            "name": "preferred_channel",
+            "dataType": "string",
+            "sourceColumn": "preferred_channel",
+            "sourceProviderType": "WChar"
+          },
+          {
+            "name": "hashcode",
+            "dataType": "string",
+            "sourceColumn": "hashcode",
+            "sourceProviderType": "Char"
+          },
+          {
+            "name": "start_date",
+            "dataType": "string",
+            "sourceColumn": "start_date",
+            "sourceProviderType": "WChar"
+          },
+          {
+            "name": "end_date",
+            "dataType": "string",
+            "sourceColumn": "end_date",
+            "sourceProviderType": "WChar"
+          },
+          {
+            "name": "record_is_latest",
+            "dataType": "boolean",
+            "sourceColumn": "record_is_latest",
+            "formatString": "\"TRUE\";\"TRUE\";\"FALSE\"",
+            "sourceProviderType": "Boolean"
+          },
+          {
+            "type": "calculated",
+            "name": "Age Group",
+            "dataType": "string",
+            "isDataTypeInferred": true,
+            "expression": [
+              "",
+              "SWITCH(",
+              "    TRUE(),",
+              "    'dim_customer'[age]>= 0 && 'dim_customer'[age] <= 20, \"0-20\",",
+              "    'dim_customer'[age]<= 40, \"21-40\",",
+              "    'dim_customer'[age] <= 60, \"41-60\",",
+              "    'dim_customer'[age] <= 80, \"61-80\",",
+              "    \"80+\"",
+              ")"
+            ]
+          }
+        ],
+        "partitions": [
+          {
+            "name": "dim_customer",
+            "dataView": "full",
+            "source": {
+              "type": "query",
+              "query": " \t\t\t\tSELECT [dbo].[dim_customer].*   FROM [dbo].[dim_customer] ",
+              "dataSource": "SqlServer DESKTOP-H49D7J4 DWH"
+            }
+          }
+        ],
+        "measures": [
+          {
+            "name": "Total Unigue Customers",
+            "expression": " DISTINCTCOUNT('dim_customer'[customer_id])"
+          },
+          {
+            "name": "Top device preference",
+            "expression": [
+              "",
+              "VAR SummaryTable =",
+              "    SUMMARIZE(",
+              "        dim_channel,",
+              "        dim_channel[channel_name],",
+              "        \"Device Preference Count\", COUNTROWS(RELATEDTABLE(dim_interaction))",
+              "    )",
+              "VAR TopRow =",
+              "    TOPN(1, SummaryTable, [Top Interaction Channel], DESC)",
+              "RETURN",
+              "    MAXX(TopRow, dim_channel[channel_name])"
+            ]
+          }
+        ],
+        "annotations": [
+          {
+            "name": "_TM_ExtProp_QueryDefinition",
+            "value": " \t\t\t\tSELECT [dbo].[dim_customer].*   FROM [dbo].[dim_customer] "
+          },
+          {
+            "name": "_TM_ExtProp_DbTableName",
+            "value": "dim_customer"
+          },
+          {
+            "name": "_TM_ExtProp_DbSchemaName",
+            "value": "dbo"
+          }
+        ]
+      },
+      {
+        "name": "dim_date",
+        "columns": [
+          {
+            "name": "date_id",
+            "dataType": "int64",
+            "sourceColumn": "date_id",
+            "sourceProviderType": "Integer"
+          },
+          {
+            "name": "full_date",
+            "dataType": "string",
+            "sourceColumn": "full_date",
+            "sourceProviderType": "WChar"
+          },
+          {
+            "name": "day_of_week",
+            "dataType": "string",
+            "sourceColumn": "day_of_week",
+            "sourceProviderType": "WChar"
+          },
+          {
+            "name": "day_of_week_number",
+            "dataType": "int64",
+            "sourceColumn": "day_of_week_number",
+            "sourceProviderType": "Integer"
+          },
+          {
+            "name": "day_of_month",
+            "dataType": "int64",
+            "sourceColumn": "day_of_month",
+            "sourceProviderType": "Integer"
+          },
+          {
+            "name": "month_number",
+            "dataType": "int64",
+            "sourceColumn": "month_number",
+            "sourceProviderType": "Integer"
+          },
+          {
+            "name": "month_name",
+            "dataType": "string",
+            "sourceColumn": "month_name",
+            "sourceProviderType": "WChar"
+          },
+          {
+            "name": "quarter",
+            "dataType": "int64",
+            "sourceColumn": "quarter",
+            "sourceProviderType": "Integer"
+          },
+          {
+            "name": "year",
+            "dataType": "int64",
+            "sourceColumn": "year",
+            "sourceProviderType": "Integer"
+          },
+          {
+            "name": "is_weekend",
+            "dataType": "boolean",
+            "sourceColumn": "is_weekend",
+            "formatString": "\"TRUE\";\"TRUE\";\"FALSE\"",
+            "sourceProviderType": "Boolean"
+          }
+        ],
+        "partitions": [
+          {
+            "name": "dim_date",
+            "dataView": "full",
+            "source": {
+              "type": "query",
+              "query": " \t\t\t\tSELECT [dbo].[dim_date].*   FROM [dbo].[dim_date] ",
+              "dataSource": "SqlServer DESKTOP-H49D7J4 DWH"
+            }
+          }
+        ],
+        "annotations": [
+          {
+            "name": "_TM_ExtProp_QueryDefinition",
+            "value": " \t\t\t\tSELECT [dbo].[dim_date].*   FROM [dbo].[dim_date] "
+          },
+          {
+            "name": "_TM_ExtProp_DbTableName",
+            "value": "dim_date"
+          },
+          {
+            "name": "_TM_ExtProp_DbSchemaName",
+            "value": "dbo"
+          }
+        ]
+      },
+      {
+        "name": "dim_interaction",
+        "columns": [
+          {
+            "name": "interaction_sk",
+            "dataType": "int64",
+            "sourceColumn": "interaction_sk",
+            "sourceProviderType": "Integer"
+          },
+          {
+            "name": "interaction_type",
+            "dataType": "string",
+            "sourceColumn": "interaction_type",
+            "sourceProviderType": "WChar"
+          },
+          {
+            "name": "page_or_product",
+            "dataType": "string",
+            "sourceColumn": "page_or_product",
+            "sourceProviderType": "WChar"
+          },
+          {
+            "type": "calculated",
+            "name": "Conversion Status",
+            "dataType": "string",
+            "isDataTypeInferred": true,
+            "expression": [
+              "",
+              "IF(",
+              "    dim_interaction[interaction_type] = \"purchase\",",
+              "    \"Completed\",",
+              "    \"Not Completed\"",
+              ")"
+            ]
+          }
+        ],
+        "partitions": [
+          {
+            "name": "dim_interaction",
+            "dataView": "full",
+            "source": {
+              "type": "query",
+              "query": " \t\t\t\tSELECT [dbo].[dim_interaction].*   FROM [dbo].[dim_interaction] ",
+              "dataSource": "SqlServer DESKTOP-H49D7J4 DWH"
+            }
+          }
+        ],
+        "measures": [
+          {
+            "name": "Total Interactions",
+            "expression": " COUNT(dim_interaction[interaction_sk])"
+          },
+          {
+            "name": "Status",
+            "expression": [
+              " ",
+              "VAR TopStatus =",
+              "    TOPN (",
+              "        1,",
+              "        VALUES ( 'dim_interaction'[Conversion Status]),",
+              "        [Conversion Status],",
+              "        DESC",
+              "    )",
+              "RETURN",
+              "    MAXX ( TopStatus, 'dim_interaction'[Conversion Status])"
+            ]
+          }
+        ],
+        "annotations": [
+          {
+            "name": "_TM_ExtProp_QueryDefinition",
+            "value": " \t\t\t\tSELECT [dbo].[dim_interaction].*   FROM [dbo].[dim_interaction] "
+          },
+          {
+            "name": "_TM_ExtProp_DbTableName",
+            "value": "dim_interaction"
+          },
+          {
+            "name": "_TM_ExtProp_DbSchemaName",
+            "value": "dbo"
+          }
+        ]
+      },
+      {
+        "name": "dim_payment_method",
+        "columns": [
+          {
+            "name": "payment_method_sk",
+            "dataType": "int64",
+            "sourceColumn": "payment_method_sk",
+            "sourceProviderType": "Integer"
+          },
+          {
+            "name": "payment_method_name",
+            "dataType": "string",
+            "sourceColumn": "payment_method_name",
+            "sourceProviderType": "WChar"
+          }
+        ],
+        "partitions": [
+          {
+            "name": "dim_payment_method",
+            "dataView": "full",
+            "source": {
+              "type": "query",
+              "query": " \t\t\t\tSELECT [dbo].[dim_payment_method].*   FROM [dbo].[dim_payment_method] ",
+              "dataSource": "SqlServer DESKTOP-H49D7J4 DWH"
+            }
+          }
+        ],
+        "measures": [
+          {
+            "name": "Most Frequent Payment Method Count",
+            "expression": [
+              "",
+              "MAXX (",
+              "    TOPN (",
+              "        1,",
+              "        SUMMARIZE (",
+              "            'DIM_PAYMENT_METHOD',",
+              "            'dim_payment_method'[payment_method_name],",
+              "            \"TxnCount\", COUNTROWS ( RELATEDTABLE ( 'FACT_TRANSACTIONS' ) )",
+              "        ),",
+              "        [TxnCount], DESC",
+              "    ),",
+              "    [TxnCount]",
+              ")"
+            ]
+          },
+          {
+            "name": "Most Frequent Payment Method",
+            "expression": [
+              "",
+              "MAXX (",
+              "    TOPN (",
+              "        1,",
+              "        SUMMARIZE (",
+              "            'DIM_PAYMENT_METHOD',",
+              "            'dim_payment_method'[payment_method_name],",
+              "            \"TransactionsCount\", COUNTROWS ( RELATEDTABLE ( 'fact_transactions' ) )",
+              "        ),",
+              "        [TransactionsCount], DESC",
+              "    ),",
+              "    'dim_payment_method'[payment_method_name]",
+              ")"
+            ]
+          }
+        ],
+        "annotations": [
+          {
+            "name": "_TM_ExtProp_QueryDefinition",
+            "value": " \t\t\t\tSELECT [dbo].[dim_payment_method].*   FROM [dbo].[dim_payment_method] "
+          },
+          {
+            "name": "_TM_ExtProp_DbTableName",
+            "value": "dim_payment_method"
+          },
+          {
+            "name": "_TM_ExtProp_DbSchemaName",
+            "value": "dbo"
+          }
+        ]
+      },
+      {
+        "name": "dim_product",
+        "columns": [
+          {
+            "name": "product_sk",
+            "dataType": "int64",
+            "sourceColumn": "product_sk",
+            "sourceProviderType": "Integer"
+          },
+          {
+            "name": "product_name",
+            "dataType": "string",
+            "sourceColumn": "product_name",
+            "sourceProviderType": "WChar"
+          },
+          {
+            "name": "category",
+            "dataType": "string",
+            "sourceColumn": "category",
+            "sourceProviderType": "WChar"
+          },
+          {
+            "name": "start_date",
+            "dataType": "string",
+            "sourceColumn": "start_date",
+            "sourceProviderType": "WChar"
+          },
+          {
+            "name": "end_date",
+            "dataType": "string",
+            "sourceColumn": "end_date",
+            "sourceProviderType": "WChar"
+          },
+          {
+            "name": "record_is_latest",
+            "dataType": "boolean",
+            "sourceColumn": "record_is_latest",
+            "formatString": "\"TRUE\";\"TRUE\";\"FALSE\"",
+            "sourceProviderType": "Boolean"
+          }
+        ],
+        "partitions": [
+          {
+            "name": "dim_product",
+            "dataView": "full",
+            "source": {
+              "type": "query",
+              "query": " \t\t\t\tSELECT [dbo].[dim_product].*   FROM [dbo].[dim_product] ",
+              "dataSource": "SqlServer DESKTOP-H49D7J4 DWH"
+            }
+          }
+        ],
+        "measures": [
+          {
+            "name": "Total Categories",
+            "expression": " DISTINCTCOUNT('dim_product'[category])"
+          },
+          {
+            "name": "Total Products",
+            "expression": " COUNT(dim_product[product_name])"
+          }
+        ],
+        "annotations": [
+          {
+            "name": "_TM_ExtProp_QueryDefinition",
+            "value": " \t\t\t\tSELECT [dbo].[dim_product].*   FROM [dbo].[dim_product] "
+          },
+          {
+            "name": "_TM_ExtProp_DbTableName",
+            "value": "dim_product"
+          },
+          {
+            "name": "_TM_ExtProp_DbSchemaName",
+            "value": "dbo"
+          }
+        ]
+      },
+      {
+        "name": "dim_reviews",
+        "columns": [
+          {
+            "name": "review_sk",
+            "dataType": "int64",
+            "sourceColumn": "review_sk",
+            "sourceProviderType": "Integer"
+          },
+          {
+            "name": "review_id",
+            "dataType": "string",
+            "sourceColumn": "review_id",
+            "sourceProviderType": "Char"
+          },
+          {
+            "name": "customer_id",
+            "dataType": "string",
+            "sourceColumn": "customer_id",
+            "sourceProviderType": "Char"
+          },
+          {
+            "name": "review_date",
+            "dataType": "string",
+            "sourceColumn": "review_date",
+            "sourceProviderType": "WChar"
+          },
+          {
+            "name": "review_title",
+            "dataType": "string",
+            "sourceColumn": "review_title",
+            "sourceProviderType": "WChar"
+          },
+          {
+            "name": "review_text",
+            "dataType": "string",
+            "sourceColumn": "review_text",
+            "sourceProviderType": "WChar"
+          },
+          {
+            "name": "start_date",
+            "dataType": "string",
+            "sourceColumn": "start_date",
+            "sourceProviderType": "WChar"
+          },
+          {
+            "name": "end_date",
+            "dataType": "string",
+            "sourceColumn": "end_date",
+            "sourceProviderType": "WChar"
+          },
+          {
+            "name": "record_is_latest",
+            "dataType": "boolean",
+            "sourceColumn": "record_is_latest",
+            "formatString": "\"TRUE\";\"TRUE\";\"FALSE\"",
+            "sourceProviderType": "Boolean"
+          }
+        ],
+        "partitions": [
+          {
+            "name": "dim_reviews",
+            "dataView": "full",
+            "source": {
+              "type": "query",
+              "query": " \t\t\t\tSELECT [dbo].[dim_reviews].*   FROM [dbo].[dim_reviews] ",
+              "dataSource": "SqlServer DESKTOP-H49D7J4 DWH"
+            }
+          }
+        ],
+        "measures": [
+          {
+            "name": "total reviews",
+            "expression": [
+              " COUNT(dim_reviews[review_id])",
+              ""
+            ]
+          }
+        ],
+        "annotations": [
+          {
+            "name": "_TM_ExtProp_QueryDefinition",
+            "value": " \t\t\t\tSELECT [dbo].[dim_reviews].*   FROM [dbo].[dim_reviews] "
+          },
+          {
+            "name": "_TM_ExtProp_DbTableName",
+            "value": "dim_reviews"
+          },
+          {
+            "name": "_TM_ExtProp_DbSchemaName",
+            "value": "dbo"
+          }
+        ]
+      },
+      {
+        "name": "dim_segment",
+        "columns": [
+          {
+            "name": "segment_sk",
+            "dataType": "int64",
+            "sourceColumn": "segment_sk",
+            "sourceProviderType": "Integer"
+          },
+          {
+            "name": "segment_name",
+            "dataType": "string",
+            "sourceColumn": "segment_name",
+            "sourceProviderType": "Char"
+          }
+        ],
+        "partitions": [
+          {
+            "name": "dim_segment",
+            "dataView": "full",
+            "source": {
+              "type": "query",
+              "query": " \t\t\t\tSELECT [dbo].[dim_segment].*   FROM [dbo].[dim_segment] ",
+              "dataSource": "SqlServer DESKTOP-H49D7J4 DWH"
+            }
+          }
+        ],
+        "measures": [
+          {
+            "name": "Inactive Customers %",
+            "expression": [
+              "",
+              "VAR NewCustomersCount =",
+              "    CALCULATE(",
+              "        DISTINCTCOUNT(dim_customer[customer_id]),",
+              "        'dim_segment'[segment_name] = \"Inactive Customers\"",
+              "    )",
+              "VAR AllCustomersCount =",
+              "    CALCULATE(",
+              "        DISTINCTCOUNT(dim_customer[customer_id]) ",
+              "    )",
+              "RETURN",
+              "    DIVIDE(NewCustomersCount, AllCustomersCount)"
+            ]
+          },
+          {
+            "name": "Loyal Customers %",
+            "expression": [
+              "",
+              "VAR NewCustomersCount =",
+              "    CALCULATE(",
+              "        DISTINCTCOUNT(dim_customer[customer_id]),",
+              "        'dim_segment'[segment_name] = \"Loyal Customers\"",
+              "    )",
+              "VAR AllCustomersCount =",
+              "    CALCULATE(",
+              "        DISTINCTCOUNT(dim_customer[customer_id]) ",
+              "    )",
+              "RETURN",
+              "    DIVIDE(NewCustomersCount, AllCustomersCount)"
+            ]
+          },
+          {
+            "name": "New Customers %",
+            "expression": [
+              "",
+              "VAR NewCustomersCount =",
+              "    CALCULATE(",
+              "        DISTINCTCOUNT(dim_customer[customer_id]),",
+              "        'dim_segment'[segment_name] = \"New Customers\"",
+              "    )",
+              "VAR AllCustomersCount =",
+              "    CALCULATE(",
+              "        DISTINCTCOUNT(dim_customer[customer_id]) ",
+              "    )",
+              "RETURN",
+              "    DIVIDE(NewCustomersCount, AllCustomersCount)"
+            ]
+          },
+          {
+            "name": "In-Store Shoppers %",
+            "expression": [
+              "",
+              "VAR NewCustomersCount =",
+              "    CALCULATE(",
+              "        DISTINCTCOUNT(dim_customer[customer_id]),",
+              "        'dim_segment'[segment_name] = \"In-Store Shoppers\"",
+              "    )",
+              "VAR AllCustomersCount =",
+              "    CALCULATE(",
+              "        DISTINCTCOUNT(dim_customer[customer_id]) ",
+              "    )",
+              "RETURN",
+              "    DIVIDE(NewCustomersCount, AllCustomersCount)"
+            ]
+          },
+          {
+            "name": "Online Shoppers %",
+            "expression": [
+              "",
+              "VAR NewCustomersCount =",
+              "    CALCULATE(",
+              "        DISTINCTCOUNT(dim_customer[customer_id]),",
+              "        'dim_segment'[segment_name] = \"Online Shoppers\"",
+              "    )",
+              "VAR AllCustomersCount =",
+              "    CALCULATE(",
+              "        DISTINCTCOUNT(dim_customer[customer_id]) ",
+              "    )",
+              "RETURN",
+              "    DIVIDE(NewCustomersCount, AllCustomersCount)"
+            ]
+          }
+        ],
+        "annotations": [
+          {
+            "name": "_TM_ExtProp_QueryDefinition",
+            "value": " \t\t\t\tSELECT [dbo].[dim_segment].*   FROM [dbo].[dim_segment] "
+          },
+          {
+            "name": "_TM_ExtProp_DbTableName",
+            "value": "dim_segment"
+          },
+          {
+            "name": "_TM_ExtProp_DbSchemaName",
+            "value": "dbo"
+          }
+        ]
+      },
+      {
+        "name": "dim_store",
+        "columns": [
+          {
+            "name": "store_sk",
+            "dataType": "int64",
+            "sourceColumn": "store_sk",
+            "sourceProviderType": "Integer"
+          },
+          {
+            "name": "store_location",
+            "dataType": "string",
+            "sourceColumn": "store_location",
+            "sourceProviderType": "WChar"
+          }
+        ],
+        "partitions": [
+          {
+            "name": "dim_store",
+            "dataView": "full",
+            "source": {
+              "type": "query",
+              "query": " \t\t\t\tSELECT [dbo].[dim_store].*   FROM [dbo].[dim_store] ",
+              "dataSource": "SqlServer DESKTOP-H49D7J4 DWH"
+            }
+          }
+        ],
+        "measures": [
+          {
+            "name": "Most Common Store",
+            "expression": [
+              "",
+              "MAXX (",
+              "    TOPN (",
+              "        1,",
+              "        SUMMARIZE (",
+              "            'dim_store',",
+              "            'dim_store'[store_location],",
+              "            \"StoreCount\", COUNTROWS ( 'FACT_TRANSACTIONS' )",
+              "        ),",
+              "        [StoreCount], DESC",
+              "    ),",
+              "       'dim_store'[store_location]",
+              ")"
+            ]
+          }
+        ],
+        "annotations": [
+          {
+            "name": "_TM_ExtProp_QueryDefinition",
+            "value": " \t\t\t\tSELECT [dbo].[dim_store].*   FROM [dbo].[dim_store] "
+          },
+          {
+            "name": "_TM_ExtProp_DbTableName",
+            "value": "dim_store"
+          },
+          {
+            "name": "_TM_ExtProp_DbSchemaName",
+            "value": "dbo"
+          }
+        ]
+      },
+      {
+        "name": "dim_tickets",
+        "columns": [
+          {
+            "name": "ticket_sk",
+            "dataType": "int64",
+            "sourceColumn": "ticket_sk",
+            "sourceProviderType": "Integer"
+          },
+          {
+            "name": "ticket_id",
+            "dataType": "string",
+            "sourceColumn": "ticket_id",
+            "sourceProviderType": "Char"
+          },
+          {
+            "name": "customer_id",
+            "dataType": "string",
+            "sourceColumn": "customer_id",
+            "sourceProviderType": "Char"
+          },
+          {
+            "name": "issue_category",
+            "dataType": "string",
+            "sourceColumn": "issue_category",
+            "sourceProviderType": "WChar"
+          },
+          {
+            "name": "submission_date",
+            "dataType": "string",
+            "sourceColumn": "submission_date",
+            "sourceProviderType": "WChar"
+          },
+          {
+            "name": "resolution_date",
+            "dataType": "string",
+            "sourceColumn": "resolution_date",
+            "sourceProviderType": "WChar"
+          },
+          {
+            "name": "resolution_status",
+            "dataType": "string",
+            "sourceColumn": "resolution_status",
+            "sourceProviderType": "WChar"
+          },
+          {
+            "name": "notes",
+            "dataType": "string",
+            "sourceColumn": "notes",
+            "sourceProviderType": "WChar"
+          },
+          {
+            "name": "start_date",
+            "dataType": "string",
+            "sourceColumn": "start_date",
+            "sourceProviderType": "WChar"
+          },
+          {
+            "name": "end_date",
+            "dataType": "string",
+            "sourceColumn": "end_date",
+            "sourceProviderType": "WChar"
+          },
+          {
+            "name": "record_is_latest",
+            "dataType": "boolean",
+            "sourceColumn": "record_is_latest",
+            "formatString": "\"TRUE\";\"TRUE\";\"FALSE\"",
+            "sourceProviderType": "Boolean"
+          }
+        ],
+        "partitions": [
+          {
+            "name": "dim_tickets",
+            "dataView": "full",
+            "source": {
+              "type": "query",
+              "query": " \t\t\t\tSELECT [dbo].[dim_tickets].*   FROM [dbo].[dim_tickets] ",
+              "dataSource": "SqlServer DESKTOP-H49D7J4 DWH"
+            }
+          }
+        ],
+        "measures": [
+          {
+            "name": "Product Return Rate",
+            "expression": [
+              "",
+              "DIVIDE (",
+              "    CALCULATE (",
+              "        SUM ( 'fact_transactions'[quantity] ),",
+              "        'dim_tickets'[issue_category] = \"RETURNS\"",
+              "    ),",
+              "    SUM ('fact_transactions'[quantity])",
+              ")"
+            ]
+          },
+          {
+            "name": "Most Common Issue",
+            "expression": [
+              "",
+              "MAXX (",
+              "    TOPN (",
+              "        1,",
+              "        SUMMARIZE (",
+              "            'dim_tickets',",
+              "            'dim_tickets'[issue_category],",
+              "            \"IssueCount\", COUNTROWS ( 'dim_tickets')",
+              "        ),",
+              "        [IssueCount], DESC",
+              "    ),",
+              "    'dim_tickets'[issue_category]",
+              ")"
+            ]
+          },
+          {
+            "name": "Most Common Issue Count",
+            "expression": [
+              "",
+              "MAXX (",
+              "    TOPN (",
+              "        1,",
+              "        SUMMARIZE (",
+              "            'dim_tickets',",
+              "            'dim_tickets'[issue_category],",
+              "            \"IssueCount\", COUNTROWS ( 'dim_tickets' )",
+              "        ),",
+              "        [IssueCount], DESC",
+              "    ),",
+              "    [IssueCount]",
+              ")"
+            ]
+          }
+        ],
+        "annotations": [
+          {
+            "name": "_TM_ExtProp_QueryDefinition",
+            "value": " \t\t\t\tSELECT [dbo].[dim_tickets].*   FROM [dbo].[dim_tickets] "
+          },
+          {
+            "name": "_TM_ExtProp_DbTableName",
+            "value": "dim_tickets"
+          },
+          {
+            "name": "_TM_ExtProp_DbSchemaName",
+            "value": "dbo"
+          }
+        ]
+      },
+      {
+        "name": "fact_campaign_performance",
+        "columns": [
+          {
+            "name": "campaign_perf_sk",
+            "dataType": "int64",
+            "sourceColumn": "campaign_perf_sk",
+            "sourceProviderType": "Integer"
+          },
+          {
+            "name": "campaign_sk",
+            "dataType": "int64",
+            "sourceColumn": "campaign_sk",
+            "sourceProviderType": "Integer"
+          },
+          {
+            "name": "segment_sk",
+            "dataType": "int64",
+            "sourceColumn": "segment_sk",
+            "sourceProviderType": "Integer"
+          },
+          {
+            "name": "date_sk",
+            "dataType": "int64",
+            "sourceColumn": "date_sk",
+            "sourceProviderType": "Integer"
+          },
+          {
+            "name": "budget",
+            "dataType": "double",
+            "sourceColumn": "budget",
+            "sourceProviderType": "Numeric"
+          },
+          {
+            "name": "impressions",
+            "dataType": "int64",
+            "sourceColumn": "impressions",
+            "sourceProviderType": "BigInt"
+          },
+          {
+            "name": "clicks",
+            "dataType": "int64",
+            "sourceColumn": "clicks",
+            "sourceProviderType": "Integer"
+          },
+          {
+            "name": "conversions",
+            "dataType": "int64",
+            "sourceColumn": "conversions",
+            "sourceProviderType": "Integer"
+          },
+          {
+            "name": "conversions_rate",
+            "dataType": "double",
+            "sourceColumn": "conversions_rate",
+            "sourceProviderType": "Numeric"
+          },
+          {
+            "name": "roi",
+            "dataType": "double",
+            "sourceColumn": "roi",
+            "sourceProviderType": "Numeric"
+          }
+        ],
+        "partitions": [
+          {
+            "name": "fact_campaign_performance",
+            "dataView": "full",
+            "source": {
+              "type": "query",
+              "query": " \t\t\t\tSELECT [dbo].[fact_campaign_performance].*   FROM [dbo].[fact_campaign_performance] ",
+              "dataSource": "SqlServer DESKTOP-H49D7J4 DWH"
+            }
+          }
+        ],
+        "measures": [
+          {
+            "name": "Average conversion rate",
+            "expression": " ROUND(AVERAGE(fact_campaign_performance[conversions_rate]),2)"
+          },
+          {
+            "name": "Total Impressions",
+            "expression": " SUM('fact_campaign_performance'[impressions])"
+          },
+          {
+            "name": "Conversion Rate (Purchases Only)",
+            "expression": [
+              "",
+              "ROUND(DIVIDE(",
+              "    CALCULATE(",
+              "        SUM('fact_campaign_performance'[conversions]),",
+              "        dim_interaction[interaction_type] = \"purchase\"",
+              "    ),",
+              "    CALCULATE(",
+              "        COUNTROWS(dim_interaction),",
+              "        dim_interaction[interaction_type] = \"purchase\"",
+              "    )",
+              "),2)"
+            ]
+          },
+          {
+            "name": "Email Campaign Conversion Rate",
+            "expression": [
+              "",
+              "VAR SummaryTable =",
+              "    ADDCOLUMNS (",
+              "        VALUES ( 'fact_campaign_performance'[conversions_rate]),",
+              "        \"email\",",
+              "            CALCULATE (",
+              "                COUNTROWS ( 'dim_campaign' ),",
+              "                  dim_campaign[campaign_type] = \"email\"",
+              "            )",
+              "    )",
+              "VAR TopRow =",
+              "    TOPN ( 1, SummaryTable, [email], DESC )",
+              "RETURN",
+              "    MAXX ( TopRow, 'fact_campaign_performance'[conversions_rate] )"
+            ]
+          },
+          {
+            "name": "Average Budget per campaign",
+            "expression": " ROUND(AVERAGE(fact_campaign_performance[budget]),3)"
+          },
+          {
+            "name": "Total roi",
+            "expression": " SUM(fact_campaign_performance[roi])"
+          }
+        ],
+        "annotations": [
+          {
+            "name": "_TM_ExtProp_QueryDefinition",
+            "value": " \t\t\t\tSELECT [dbo].[fact_campaign_performance].*   FROM [dbo].[fact_campaign_performance] "
+          },
+          {
+            "name": "_TM_ExtProp_DbTableName",
+            "value": "fact_campaign_performance"
+          },
+          {
+            "name": "_TM_ExtProp_DbSchemaName",
+            "value": "dbo"
+          }
+        ]
+      },
+      {
+        "name": "fact_interactions",
+        "columns": [
+          {
+            "name": "interaction_fact_sk",
+            "dataType": "int64",
+            "sourceColumn": "interaction_fact_sk",
+            "sourceProviderType": "Integer"
+          },
+          {
+            "name": "customer_sk",
+            "dataType": "int64",
+            "sourceColumn": "customer_sk",
+            "sourceProviderType": "Integer"
+          },
+          {
+            "name": "campaign_sk",
+            "dataType": "int64",
+            "sourceColumn": "campaign_sk",
+            "sourceProviderType": "Integer"
+          },
+          {
+            "name": "channel_sk",
+            "dataType": "int64",
+            "sourceColumn": "channel_sk",
+            "sourceProviderType": "Integer"
+          },
+          {
+            "name": "interaction_sk",
+            "dataType": "int64",
+            "sourceColumn": "interaction_sk",
+            "sourceProviderType": "Integer"
+          },
+          {
+            "name": "date_id",
+            "dataType": "int64",
+            "sourceColumn": "date_id",
+            "sourceProviderType": "Integer"
+          },
+          {
+            "name": "duration",
+            "dataType": "int64",
+            "sourceColumn": "duration",
+            "sourceProviderType": "Integer"
+          },
+          {
+            "name": "session_id",
+            "dataType": "string",
+            "sourceColumn": "session_id",
+            "sourceProviderType": "Char"
+          }
+        ],
+        "partitions": [
+          {
+            "name": "fact_interactions",
+            "dataView": "full",
+            "source": {
+              "type": "query",
+              "query": " \t\t\t\tSELECT [dbo].[fact_interactions].*   FROM [dbo].[fact_interactions] ",
+              "dataSource": "SqlServer DESKTOP-H49D7J4 DWH"
+            }
+          }
+        ],
+        "annotations": [
+          {
+            "name": "_TM_ExtProp_QueryDefinition",
+            "value": " \t\t\t\tSELECT [dbo].[fact_interactions].*   FROM [dbo].[fact_interactions] "
+          },
+          {
+            "name": "_TM_ExtProp_DbTableName",
+            "value": "fact_interactions"
+          },
+          {
+            "name": "_TM_ExtProp_DbSchemaName",
+            "value": "dbo"
+          }
+        ]
+      },
+      {
+        "name": "fact_reviews",
+        "columns": [
+          {
+            "name": "review_fact_sk",
+            "dataType": "int64",
+            "sourceColumn": "review_fact_sk",
+            "sourceProviderType": "Integer"
+          },
+          {
+            "name": "review_id",
+            "dataType": "string",
+            "sourceColumn": "review_id",
+            "sourceProviderType": "Char"
+          },
+          {
+            "name": "review_sk",
+            "dataType": "int64",
+            "sourceColumn": "review_sk",
+            "sourceProviderType": "Integer"
+          },
+          {
+            "name": "customer_sk",
+            "dataType": "int64",
+            "sourceColumn": "customer_sk",
+            "sourceProviderType": "Integer"
+          },
+          {
+            "name": "product_sk",
+            "dataType": "int64",
+            "sourceColumn": "product_sk",
+            "sourceProviderType": "Integer"
+          },
+          {
+            "name": "date_sk",
+            "dataType": "int64",
+            "sourceColumn": "date_sk",
+            "sourceProviderType": "Integer"
+          },
+          {
+            "name": "rating",
+            "dataType": "int64",
+            "sourceColumn": "rating",
+            "sourceProviderType": "Integer"
+          }
+        ],
+        "partitions": [
+          {
+            "name": "fact_reviews",
+            "dataView": "full",
+            "source": {
+              "type": "query",
+              "query": " \t\t\t\tSELECT [dbo].[fact_reviews].*   FROM [dbo].[fact_reviews] ",
+              "dataSource": "SqlServer DESKTOP-H49D7J4 DWH"
+            }
+          }
+        ],
+        "measures": [
+          {
+            "name": "average rating",
+            "expression": " ROUND(AVERAGE(fact_reviews[rating]),0)"
+          }
+        ],
+        "annotations": [
+          {
+            "name": "_TM_ExtProp_QueryDefinition",
+            "value": " \t\t\t\tSELECT [dbo].[fact_reviews].*   FROM [dbo].[fact_reviews] "
+          },
+          {
+            "name": "_TM_ExtProp_DbTableName",
+            "value": "fact_reviews"
+          },
+          {
+            "name": "_TM_ExtProp_DbSchemaName",
+            "value": "dbo"
+          }
+        ]
+      },
+      {
+        "name": "fact_tickets",
+        "columns": [
+          {
+            "name": "ticket_fact_sk",
+            "dataType": "int64",
+            "sourceColumn": "ticket_fact_sk",
+            "sourceProviderType": "Integer"
+          },
+          {
+            "name": "ticket_id",
+            "dataType": "string",
+            "sourceColumn": "ticket_id",
+            "sourceProviderType": "Char"
+          },
+          {
+            "name": "ticket_sk",
+            "dataType": "int64",
+            "sourceColumn": "ticket_sk",
+            "sourceProviderType": "Integer"
+          },
+          {
+            "name": "customer_sk",
+            "dataType": "int64",
+            "sourceColumn": "customer_sk",
+            "sourceProviderType": "Integer"
+          },
+          {
+            "name": "date_sk",
+            "dataType": "int64",
+            "sourceColumn": "date_sk",
+            "sourceProviderType": "Integer"
+          },
+          {
+            "name": "resolution_status",
+            "dataType": "string",
+            "sourceColumn": "resolution_status",
+            "sourceProviderType": "Char"
+          },
+          {
+            "name": "priority",
+            "dataType": "string",
+            "sourceColumn": "priority",
+            "sourceProviderType": "Char"
+          },
+          {
+            "name": "resolution_time_hours",
+            "dataType": "double",
+            "sourceColumn": "resolution_time_hours",
+            "sourceProviderType": "Numeric"
+          }
+        ],
+        "partitions": [
+          {
+            "name": "fact_tickets",
+            "dataView": "full",
+            "source": {
+              "type": "query",
+              "query": " \t\t\t\tSELECT [dbo].[fact_tickets].*   FROM [dbo].[fact_tickets] ",
+              "dataSource": "SqlServer DESKTOP-H49D7J4 DWH"
+            }
+          }
+        ],
+        "measures": [
+          {
+            "name": "average resolution time in hours",
+            "expression": " ROUND(AVERAGE(fact_tickets[resolution_time_hours]),2)"
+          },
+          {
+            "name": "Dominant Ticket Priority",
+            "expression": [
+              "",
+              "MAXX (",
+              "    TOPN (",
+              "        1,",
+              "        SUMMARIZE (",
+              "            'FACT_TICKETS',",
+              "            'fact_tickets'[priority],",
+              "            \"PriorityCount\", COUNTROWS ( 'FACT_TICKETS' )",
+              "        ),",
+              "        [PriorityCount], DESC",
+              "    ),",
+              "    'fact_tickets'[priority]",
+              ")"
+            ]
+          },
+          {
+            "name": "Most Common Ticket Status",
+            "expression": [
+              "",
+              "MAXX (",
+              "    TOPN (",
+              "        1,",
+              "        SUMMARIZE (",
+              "            'fact_tickets',",
+              "            'FACT_TICKETS'[RESOLUTION_STATUS],",
+              "            \"StatusCount\", COUNTROWS ( 'FACT_TICKETS' )",
+              "        ),",
+              "        [StatusCount], DESC",
+              "    ),",
+              "    'FACT_TICKETS'[RESOLUTION_STATUS]",
+              ")",
+              ""
+            ]
+          }
+        ],
+        "annotations": [
+          {
+            "name": "_TM_ExtProp_QueryDefinition",
+            "value": " \t\t\t\tSELECT [dbo].[fact_tickets].*   FROM [dbo].[fact_tickets] "
+          },
+          {
+            "name": "_TM_ExtProp_DbTableName",
+            "value": "fact_tickets"
+          },
+          {
+            "name": "_TM_ExtProp_DbSchemaName",
+            "value": "dbo"
+          }
+        ]
+      },
+      {
+        "name": "fact_transactions",
+        "columns": [
+          {
+            "name": "transaction_fact_sk",
+            "dataType": "int64",
+            "sourceColumn": "transaction_fact_sk",
+            "sourceProviderType": "Integer"
+          },
+          {
+            "name": "date_sk",
+            "dataType": "int64",
+            "sourceColumn": "date_sk",
+            "sourceProviderType": "Integer"
+          },
+          {
+            "name": "customer_sk",
+            "dataType": "int64",
+            "sourceColumn": "customer_sk",
+            "sourceProviderType": "Integer"
+          },
+          {
+            "name": "product_sk",
+            "dataType": "int64",
+            "sourceColumn": "product_sk",
+            "sourceProviderType": "Integer"
+          },
+          {
+            "name": "campaign_sk",
+            "dataType": "int64",
+            "sourceColumn": "campaign_sk",
+            "sourceProviderType": "Integer"
+          },
+          {
+            "name": "store_sk",
+            "dataType": "int64",
+            "sourceColumn": "store_sk",
+            "sourceProviderType": "Integer"
+          },
+          {
+            "name": "payment_method_sk",
+            "dataType": "int64",
+            "sourceColumn": "payment_method_sk",
+            "sourceProviderType": "Integer"
+          },
+          {
+            "name": "quantity",
+            "dataType": "int64",
+            "sourceColumn": "quantity",
+            "sourceProviderType": "Integer"
+          },
+          {
+            "name": "price",
+            "dataType": "double",
+            "sourceColumn": "price",
+            "sourceProviderType": "Numeric"
+          },
+          {
+            "name": "discount percentage",
+            "dataType": "double",
+            "sourceColumn": "discount_applied",
+            "sourceProviderType": "Numeric"
+          },
+          {
+            "name": "amount",
+            "dataType": "double",
+            "sourceColumn": "amount",
+            "sourceProviderType": "Numeric"
+          },
+          {
+            "type": "calculated",
+            "name": "discount label",
+            "dataType": "string",
+            "isDataTypeInferred": true,
+            "expression": [
+              " SWITCH(",
+              "    TRUE(),",
+              "    'fact_transactions'[discount percentage] = 0, \"No Discount\",",
+              "    'fact_transactions'[discount percentage] <= 10, \"Small\",",
+              "    'fact_transactions'[discount percentage] <= 20, \"Medium\",",
+              "    'fact_transactions'[discount percentage] <= 30, \"High\"",
+              ")"
+            ]
+          }
+        ],
+        "partitions": [
+          {
+            "name": "fact_transactions",
+            "dataView": "full",
+            "source": {
+              "type": "query",
+              "query": " \t\t\t\tSELECT [dbo].[fact_transactions].*   FROM [dbo].[fact_transactions] ",
+              "dataSource": "SqlServer DESKTOP-H49D7J4 DWH"
+            }
+          }
+        ],
+        "measures": [
+          {
+            "name": "Revenue",
+            "expression": "SUM(fact_transactions[amount]) "
+          },
+          {
+            "name": "Avgerage Products per Transaction",
+            "expression": [
+              "",
+              "AVERAGEX (",
+              "    VALUES ( 'fact_transactions'[transaction_fact_sk] ),",
+              "    CALCULATE ( DISTINCTCOUNT ('fact_transactions'[quantity])",
+              "))"
+            ]
+          },
+          {
+            "name": "Number of transactions",
+            "expression": [
+              " DISTINCTCOUNT(fact_transactions[transaction_fact_sk])",
+              ""
+            ]
+          },
+          {
+            "name": "Product with highest revenue",
+            "expression": [
+              "",
+              "MAXX (",
+              "    TOPN (",
+              "        1,",
+              "        SUMMARIZE (",
+              "            'dim_product',",
+              "            'dim_product'[product_name],",
+              "            \"Revenue\", [Revenue]",
+              "        ),",
+              "        [Revenue], DESC",
+              "    ),",
+              "    'dim_product'[product_name]",
+              ")"
+            ]
+          },
+          {
+            "name": "Top locations by revenue",
+            "expression": [
+              "",
+              "MAXX (",
+              "    TOPN (",
+              "        1,",
+              "        SUMMARIZE (",
+              "            'dim_store',",
+              "            'dim_store'[store_location],",
+              "            \"Revenue\", [Revenue]",
+              "        ),",
+              "        [Revenue], DESC",
+              "    ),",
+              "    'dim_store'[store_location]",
+              ")"
+            ]
+          },
+          {
+            "name": "Most Redeemed Discount",
+            "expression": [
+              "",
+              "MAXX (",
+              "    TOPN (",
+              "        1,",
+              "        SUMMARIZE (",
+              "            'fact_transactions',",
+              "            'fact_transactions'[Discount Label],",
+              "            \"RedeemedCount\", COUNTROWS ( 'fact_transactions' )",
+              "        ),",
+              "        [RedeemedCount], DESC",
+              "    ),",
+              "    'fact_transactions'[Discount Label]",
+              ")"
+            ]
+          },
+          {
+            "name": "Top Selling Categories by purchasing",
+            "expression": [
+              "",
+              "VAR SummaryTable =",
+              "    ADDCOLUMNS (",
+              "        VALUES ( 'dim_product'[category]),",
+              "        \"purchase\",",
+              "            CALCULATE (",
+              "                COUNTROWS ( dim_interaction ),",
+              "                  dim_interaction[interaction_type] = \"purchase\"",
+              "            )",
+              "    )",
+              "VAR TopRow =",
+              "    TOPN ( 1, SummaryTable, [purchase], DESC )",
+              "RETURN",
+              "    MAXX ( TopRow, 'dim_product'[category] )"
+            ]
+          },
+          {
+            "name": "Discount Usage",
+            "expression": [
+              "",
+              "ROUND(DIVIDE(",
+              "    COUNTROWS( FILTER( fact_transactions, fact_transactions[discount percentage] > 0 ) ),",
+              "    COUNTROWS( fact_transactions )",
+              "),2)"
+            ]
+          },
+          {
+            "name": "AddToCart Event",
+            "expression": [
+              " ",
+              "CALCULATE(",
+              "    COUNTROWS('dim_interaction'),",
+              "    'dim_interaction'[interaction_type] = \"add_to_cart\"",
+              ")"
+            ]
+          },
+          {
+            "name": "Products with Highest AddToCart Event",
+            "expression": [
+              "",
+              "VAR SummaryTable =",
+              "    ADDCOLUMNS (",
+              "        VALUES ( 'dim_product'[product_name]),",
+              "        \"add-to-cart\",",
+              "            CALCULATE (",
+              "                COUNTROWS ( dim_interaction ),",
+              "                  dim_interaction[interaction_type] = \"add-to-cart\"",
+              "            )",
+              "    )",
+              "VAR TopRow =",
+              "    TOPN ( 1, SummaryTable, [add-to-cart], DESC )",
+              "RETURN",
+              "    MAXX ( TopRow, 'dim_product'[product_name] )",
+              ""
+            ]
+          },
+          {
+            "name": "Avg Order Value",
+            "expression": " SUM(fact_transactions[price]) / COUNT(fact_transactions[transaction_fact_sk])"
+          },
+          {
+            "name": "Top 5 Selling Categories by purchasing",
+            "expression": [
+              "",
+              "VAR SummaryTable =",
+              "    ADDCOLUMNS (",
+              "        VALUES ( 'dim_product'[category]),",
+              "        \"purchase\",",
+              "            CALCULATE (",
+              "                COUNTROWS ( dim_interaction ),",
+              "                  dim_interaction[interaction_type] = \"purchase\"",
+              "            )",
+              "    )",
+              "VAR TopRow =",
+              "    TOPN ( 5, SummaryTable, [purchase], DESC )",
+              "RETURN",
+              "    MAXX ( TopRow, 'dim_product'[category] )"
+            ]
+          },
+          {
+            "name": "5 Product with highest revenue",
+            "expression": [
+              "",
+              "MAXX (",
+              "    TOPN (",
+              "        5,",
+              "        SUMMARIZE (",
+              "            'dim_product',",
+              "            'dim_product'[product_name],",
+              "            \"Revenue\", [Revenue]",
+              "        ),",
+              "        [Revenue], DESC",
+              "    ),",
+              "    'dim_product'[product_name]",
+              ")"
+            ]
+          }
+        ],
+        "annotations": [
+          {
+            "name": "_TM_ExtProp_QueryDefinition",
+            "value": " \t\t\t\tSELECT [dbo].[fact_transactions].*   FROM [dbo].[fact_transactions] "
+          },
+          {
+            "name": "_TM_ExtProp_DbTableName",
+            "value": "fact_transactions"
+          },
+          {
+            "name": "_TM_ExtProp_DbSchemaName",
+            "value": "dbo"
+          }
+        ]
+      }
+    ],
+    "relationships": [
+      {
+        "name": "992260d7-f2b0-476d-ab2a-59f34ddc6133",
+        "fromTable": "fact_campaign_performance",
+        "fromColumn": "date_sk",
+        "toTable": "dim_date",
+        "toColumn": "date_id"
+      },
+      {
+        "name": "d2f357d8-012c-4123-beac-10a9534e67e7",
+        "fromTable": "fact_interactions",
+        "fromColumn": "campaign_sk",
+        "toTable": "dim_campaign",
+        "toColumn": "campaign_sk"
+      },
+      {
+        "name": "946880b0-9e19-4ff6-8b5f-8843bfc01baa",
+        "fromTable": "fact_interactions",
+        "fromColumn": "date_id",
+        "toTable": "dim_date",
+        "toColumn": "date_id"
+      },
+      {
+        "name": "134f3556-02d2-4e7b-a9ef-09181108bc1d",
+        "fromTable": "fact_reviews",
+        "fromColumn": "customer_sk",
+        "toTable": "dim_customer",
+        "toColumn": "customer_sk"
+      },
+      {
+        "name": "cd21bfad-ac76-4e3d-bedd-2cecd424450c",
+        "fromTable": "fact_reviews",
+        "fromColumn": "product_sk",
+        "toTable": "dim_product",
+        "toColumn": "product_sk"
+      },
+      {
+        "name": "371a631c-c34e-4311-bdc8-f840e0fe4768",
+        "fromTable": "fact_tickets",
+        "fromColumn": "customer_sk",
+        "toTable": "dim_customer",
+        "toColumn": "customer_sk"
+      },
+      {
+        "name": "eece266e-dac6-48b4-8cdf-97db6b34ce01",
+        "fromTable": "fact_tickets",
+        "fromColumn": "date_sk",
+        "toTable": "dim_date",
+        "toColumn": "date_id"
+      },
+      {
+        "name": "d2293a18-9a14-446f-a8c5-d80ceac389b1",
+        "fromTable": "fact_transactions",
+        "fromColumn": "customer_sk",
+        "toTable": "dim_customer",
+        "toColumn": "customer_sk"
+      },
+      {
+        "name": "286272b9-6ff9-4d1c-a616-1da2909dea7e",
+        "fromTable": "fact_transactions",
+        "fromColumn": "date_sk",
+        "toTable": "dim_date",
+        "toColumn": "date_id"
+      },
+      {
+        "name": "9cc04c87-5bea-421a-9ce3-aac17c6c1667",
+        "fromTable": "fact_campaign_performance",
+        "fromColumn": "campaign_sk",
+        "toTable": "dim_campaign",
+        "toColumn": "campaign_sk"
+      },
+      {
+        "name": "03bc80fe-fde2-4b3b-881f-5246f0a30c59",
+        "fromTable": "fact_campaign_performance",
+        "fromColumn": "segment_sk",
+        "toTable": "dim_segment",
+        "toColumn": "segment_sk"
+      },
+      {
+        "name": "c4afc3cc-c1f6-4dda-930c-317bf0c1afd4",
+        "fromTable": "fact_interactions",
+        "fromColumn": "channel_sk",
+        "toTable": "dim_channel",
+        "toColumn": "channel_sk"
+      },
+      {
+        "name": "e1d36842-c36f-4d83-8486-c3f801ccf3aa",
+        "fromTable": "fact_interactions",
+        "fromColumn": "customer_sk",
+        "toTable": "dim_customer",
+        "toColumn": "customer_sk"
+      },
+      {
+        "name": "ed63b68f-68ab-4f00-8c26-8b9e09bca63a",
+        "fromTable": "fact_interactions",
+        "fromColumn": "interaction_sk",
+        "toTable": "dim_interaction",
+        "toColumn": "interaction_sk"
+      },
+      {
+        "name": "6719cb1c-0652-48a4-a21a-1b77af287d50",
+        "fromTable": "fact_reviews",
+        "fromColumn": "date_sk",
+        "toTable": "dim_date",
+        "toColumn": "date_id"
+      },
+      {
+        "name": "dd7fe2d2-a105-448f-9948-a2afc51f2f9e",
+        "fromTable": "fact_tickets",
+        "fromColumn": "ticket_sk",
+        "toTable": "dim_tickets",
+        "toColumn": "ticket_sk"
+      },
+      {
+        "name": "3beb74a9-99b9-4bcc-b7f9-5420e371a50a",
+        "fromTable": "fact_transactions",
+        "fromColumn": "payment_method_sk",
+        "toTable": "dim_payment_method",
+        "toColumn": "payment_method_sk"
+      },
+      {
+        "name": "0e8cbd15-f3a1-4e6b-b241-be8b3b03fdff",
+        "fromTable": "fact_transactions",
+        "fromColumn": "product_sk",
+        "toTable": "dim_product",
+        "toColumn": "product_sk"
+      },
+      {
+        "name": "06bac12e-e2af-4135-9a9b-5eca9f701246",
+        "fromTable": "fact_transactions",
+        "fromColumn": "store_sk",
+        "toTable": "dim_store",
+        "toColumn": "store_sk"
+      }
+    ],
+    "annotations": [
+      {
+        "name": "ClientCompatibilityLevel",
+        "value": "400"
+      }
+    ]
+  },
+  "id": "SemanticModel"
+}
